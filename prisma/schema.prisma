@@ -1,8 +1,228 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
+}
+
+model AdminAccount {
+  id                   String   @id
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @default(now())
+  relatedUserSystemUid String?  @unique
+  username             String
+  hashedPassword       String
+  description          String?
+}
+
+model Category {
+  id               String   @id
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now())
+  name             String
+  color            String
+  discountPolicyId String?
+}
+
+model Coupon {
+  id                String    @id
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now())
+  name              String
+  expiresAt         DateTime?
+  amount            Int
+  usedTransactionId String?
+  issuerId          String
+  receiverId        String
+}
+
+model DiscountPolicy {
+  id          String    @id
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  endsAt      DateTime?
+  fixedPrice  Int?
+  percentRate Int?
+  eventId     String?
+}
+
+model Event {
+  id          String   @id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  url         String
+  description String
+  title       String
+}
+
+model GeneralCard {
+  id              String   @id
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+  cardNumber      String
+  validMonth      Int
+  validYear       Int
+  billingKey      String
+  paymentMethodId String   @unique
+}
+
+model Notice {
+  id          String    @id
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  startsAt    DateTime  @default(now())
+  endsAt      DateTime?
+  title       String
+  description String?
+  url         String?
+  authorId    String
+}
+
+model PaymentMethod {
+  id        String             @id
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @default(now())
+  type      PaymentMethod_type
+  ownerId   String
+  color     String?
+  name      String?
+}
+
+model PosDevice {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  name      String
+  disabled  Boolean  @default(false)
+}
+
+model PrepaidCard {
+  id              String   @id
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+  balance         Int      @default(0)
+  paymentMethodId String   @unique
+}
+
+model PrepaidCardChargeHistory {
+  id                  String                          @id
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime                        @default(now())
+  delta               Int
+  status              PrepaidCardChargeHistory_status
+  method              String
+  detailInfo          String
+  targetPrepaidCardId String
+}
+
+model Product {
+  id             String   @id
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  name           String
+  barcode        String?
+  price          Int
+  sellingStopped Boolean  @default(false)
+  categoryId     String
+}
+
+model ProductInOutLog {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  delta     Int
+  message   String?
+  productId String
+}
+
+model Transaction {
+  id          String                 @id
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @default(now())
+  billingId   String
+  totalPrice  Int
+  status      Transaction_status
+  statusText  String?
+  authMethod  Transaction_authMethod
+  usedCardId  String
+  posDeviceId String
+  userId      String
+}
+
+model User {
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  isDisabled    Boolean  @default(false)
+  accountName   String   @unique
+  name          String
+  isTeacher     Boolean? @default(false)
+  profileImage  String?
+  studentNumber String?
+  id            String   @id
+  systemId      String   @unique
+  paymentPin    String?
+  phoneNumber   String?
+}
+
+model CategoryToDiscountPolicy {
+  A String
+  B String
+
+  @@unique([A, B], map: "_CategoryToDiscountPolicy_AB_unique")
+  @@index([B], map: "_CategoryToDiscountPolicy_B_index")
+  @@map("_CategoryToDiscountPolicy")
+}
+
+model ProductToTransaction {
+  A String
+  B String
+
+  @@unique([A, B], map: "_ProductToTransaction_AB_unique")
+  @@index([B], map: "_ProductToTransaction_B_index")
+  @@map("_ProductToTransaction")
+}
+
+model discountExcludedProduct {
+  A String
+  B String
+
+  @@unique([A, B], map: "_discountExcludedProduct_AB_unique")
+  @@index([B], map: "_discountExcludedProduct_B_index")
+  @@map("_discountExcludedProduct")
+}
+
+model discountTargetProduct {
+  A String
+  B String
+
+  @@unique([A, B], map: "_discountTargetProduct_AB_unique")
+  @@index([B], map: "_discountTargetProduct_B_index")
+  @@map("_discountTargetProduct")
+}
+
+enum PaymentMethod_type {
+  PREPAID
+  GENERAL
+}
+
+enum PrepaidCardChargeHistory_status {
+  CONFIRMED
+  CANCELED
+  ERROR
+}
+
+enum Transaction_status {
+  CONFIRMED
+  CANCELED
+  ERROR
+}
+
+enum Transaction_authMethod {
+  SMS
+  APP_QR
+  FACESIGN
 }
